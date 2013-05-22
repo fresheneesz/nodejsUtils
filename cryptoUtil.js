@@ -1,0 +1,22 @@
+var crypto = require('crypto');
+
+exports.hash = function(algorithm, encoding) {
+    var hasher = crypto.createHash("md5");
+    this.enc = function(message) {
+        return hasher.update(message).digest(encoding).toString();
+    };
+};
+exports.sym = function(algorithm, encoding) {
+    this.enc = function(key, message) {
+        var enc = crypto.createCipher(algorithm, key);
+        return enc.update(message, 'utf8', encoding).toString() + enc.final(encoding);
+    };
+    this.dec = function(key, encryptedMessage) {
+        var dec = crypto.createDecipher(algorithm, key);
+        return dec.update(encryptedMessage, encoding, 'utf8') + enc.final('utf8');
+    };
+};
+
+/*asym: function() {
+
+}*/
