@@ -1,7 +1,7 @@
 var crypto = require('crypto');
 
 exports.hash = function(algorithm, encoding) {
-    var hasher = crypto.createHash("md5");
+    var hasher = crypto.createHash(algorithm);
     this.enc = function(message) {
         return hasher.update(message).digest(encoding).toString();
     };

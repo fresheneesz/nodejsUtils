@@ -1,5 +1,6 @@
 var exec = require('child_process').exec
 var utils = require('utils')
+var future = require('./robustFuture')
 var fs = require('fs')
 
 exports.file = function file(source, destination) {
