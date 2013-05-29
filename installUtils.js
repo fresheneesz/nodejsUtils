@@ -1,12 +1,7 @@
 var childExec = require('child_process').exec;
 var utils = require('./utils');
 var fs = require('fs');
-
-var f;
-function future() {
-    if(f===undefined) f = require('./robustFuture');
-    return f;
-}
+var future = require('./robustFuture');
 
 exports.file = function file(source, destination) {
 	if( ! fs.existsSync(destination)) {
@@ -43,8 +38,8 @@ exports.runCommand = runCommand;
 function runCommand(command, cwd) {
 	var options = {};
 	if(cwd!==undefined) options.cwd = cwd;
-    console.log('executing: '+command);
     return childExec(command, options, function (error, stdout, stderr) {
+        console.log('executed: '+command);
 		if (error !== null) console.log(error);
 
 		utils.log('-stdout-\n' + stdout + "\n"
@@ -84,7 +79,7 @@ exports.module = function module(module, destination) {
 	if(packageExists && (!moduleIsShrinkwrapped || shrinkwrap[module].version === package.version)) {
 		utils.log("Skipping installing module '"+module+"' since it already exists with the right version (or is a new module).");
 	} else {
-		runCommand("npm install "+destination+module);
+		runCommand("npm install "+module, destination);
 	}
 
     return moduleIsShrinkwrapped;
