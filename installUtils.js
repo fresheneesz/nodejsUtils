@@ -1,7 +1,12 @@
-var exec = require('child_process').exec
-var utils = require('utils')
-var future = require('./robustFuture')
-var fs = require('fs')
+var childExec = require('child_process').exec;
+var utils = require('./utils');
+var fs = require('fs');
+
+var f;
+function future() {
+    if(f===undefined) f = require('./robustFuture');
+    return f;
+}
 
 exports.file = function file(source, destination) {
 	if( ! fs.existsSync(destination)) {
@@ -12,18 +17,41 @@ exports.file = function file(source, destination) {
 	}	
 };
 
-exports.runCommand = runCommand;
-function runCommand(command, cwd) {
-	var options = {};
-	if(cwd!==undefined) options.cwd = cwd;
-    return exec(command, options, function (error, stdout, stderr) {
-		if (error !== null) throw error;
+function npmRequire(moduleName, installLocation) {
+    if(installLocation === undefined) installLocation = moduleName;
+
+    try {
+        return require(moduleName);
+    } catch(e) {
+
+    }
+}
+
+
+exports.exec = exec;
+function exec() {
+    return childExec(command, options, function (error, stdout, stderr) {
+		if (error !== null) console.log(error);
 
 		utils.log('-stdout-\n' + stdout + "\n"
 	  			+ '-stderr-\n' + stderr + "\n"
 	  	);
 	});
-};
+}
+
+exports.runCommand = runCommand;
+function runCommand(command, cwd) {
+	var options = {};
+	if(cwd!==undefined) options.cwd = cwd;
+    console.log('executing: '+command);
+    return childExec(command, options, function (error, stdout, stderr) {
+		if (error !== null) console.log(error);
+
+		utils.log('-stdout-\n' + stdout + "\n"
+	  			+ '-stderr-\n' + stderr + "\n"
+	  	);
+	});
+}
 
 
 var shrinkwrapCache = {};
