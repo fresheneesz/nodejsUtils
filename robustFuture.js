@@ -1,7 +1,7 @@
 // Modified version of fiber/future.js that changes the behavior of detach and provides a way to access orphaned future throws
 
 "use strict";
-var Fiber = require('./fibers');
+var Fiber = require('fibers');
 var util = require('util');
 module.exports = Future;
 Function.prototype.future = function() {
