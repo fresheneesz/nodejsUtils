@@ -6,17 +6,39 @@ var execAsync = function(command, options, after) {
     });
 };
 
+var gitResetAsync = function(location, revision, after) {
+    if(revision === undefined) revision = 'HEAD';
+
+    execAsync('git reset --hard '+revision, {cwd:location}, function (err, data) { // use a specific revision
+        data['reset'] = resetData;
+        after(err, data);
+    });
+};
+
 // separate from gitRepo so it can be more simply pulled out to bootstrap loading this module
 var gitRepoAsync = function(url, name, installDirectory, revision, after) {
     var data = {};
-    execAsync('git clone '+url+' '+name, {cwd:installDirectory}, function (err, cloneData) {
-        data['clone'] = cloneData;
-        if(err) after(err, data);
-        execAsync('git reset --hard '+revision, {cwd:installDirectory+'/'+name+'/'}, function (err, resetData) { // use a specific revision
+    var location = installDirectory+'/'+name+'/';
+
+    var reset = function() {
+        gitResetAsync(location, revision, function (err, resetData) { // use a specific revision
             data['reset'] = resetData;
             after(err, data);
         });
-    });
+    };
+
+    if(require('fs').existsSync(location)) {
+        data['clone'] = {'out': 'Skipping clone because '+location+' already exists.'};
+        reset();
+
+    } else {
+        execAsync('git clone '+url+' '+location, {}, function (err, cloneData) {
+            data['clone'] = cloneData;
+            if(err) after(err, data);
+
+            reset();
+        });
+    }
 };
 
 // separate from gitPackage so it can be more simply pulled out to bootstrap loading this module
@@ -28,6 +50,8 @@ var gitPackageAsync = function(url, name, installDirectory, revision, after) {
        });
     });
 };
+
+
 
 /*
 // requires a module, and if it doesn't exist, npm it in
