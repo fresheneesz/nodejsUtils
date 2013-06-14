@@ -10,7 +10,6 @@ var gitResetAsync = function(location, revision, after) {
     if(revision === undefined) revision = 'HEAD';
 
     execAsync('git reset --hard '+revision, {cwd:location}, function (err, data) { // use a specific revision
-        data['reset'] = resetData;
         after(err, data);
     });
 };
@@ -41,13 +40,19 @@ var gitRepoAsync = function(url, name, installDirectory, revision, after) {
     }
 };
 
+var npmInstallAsync = function(location, after) {
+    execAsync('npm install', {cwd:location}, function (err, data) {
+        after(err, data);
+    });
+};
+
 // separate from gitPackage so it can be more simply pulled out to bootstrap loading this module
 var gitPackageAsync = function(url, name, installDirectory, revision, after) {
     gitRepoAsync(url, name, installDirectory, revision, function(err, data) {
-       execAsync('npm install', {cwd:installDirectory+'/'+name+'/'}, function (err, installData) {
+        npmInstallAsync(installDirectory+'/'+name+'/', function (err, installData) {
            data['install'] = installData;
            after(err, data);
-       });
+        });
     });
 };
 
