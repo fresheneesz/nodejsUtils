@@ -1,3 +1,6 @@
-{"name":"bt",
- "version":"0.0.0"
+{"name":"nodejsUtils",
+ "version":"0.0.0",
+ "dependencies":{
+   "fibers": "1.0.1"
+ }
 }

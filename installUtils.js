@@ -1,53 +1,82 @@
-var childExec = require('child_process').exec;
-var utils = require('./utils');
-var fs = require('fs');
-var future = require('./robustFuture');
+// separate from exec so it can be more simply pulled out to bootstrap loading this module
+var execAsync = function(command, options, after) {
+    if(options===undefined) options = {};
+    require('child_process').exec(command, options, function (error, stdout, stderr) {
+        after(error, {out:stdout, err:stderr});
+    });
+};
 
+// separate from gitRepo so it can be more simply pulled out to bootstrap loading this module
+var gitRepoAsync = function(url, name, installDirectory, revision, after) {
+    var data = {};
+    execAsync('git clone '+url+' '+name, {cwd:installDirectory}, function (err, cloneData) {
+        data['clone'] = cloneData;
+        if(err) after(err, data);
+        execAsync('git reset --hard '+revision, {cwd:installDirectory+'/'+name+'/'}, function (err, resetData) { // use a specific revision
+            data['reset'] = resetData;
+            after(err, data);
+        });
+    });
+};
+
+// separate from gitPackage so it can be more simply pulled out to bootstrap loading this module
+var gitPackageAsync = function(url, name, installDirectory, revision, after) {
+    gitRepoAsync(url, name, installDirectory, revision, function(err, data) {
+       execAsync('npm install', {cwd:installDirectory+'/'+name+'/'}, function (err, installData) {
+           data['install'] = installData;
+           after(err, data);
+       });
+    });
+};
+
+/*
+// requires a module, and if it doesn't exist, npm it in
+// after gets stdout, stderr, and a possible exception as arguments
+function requireNpm(module, after) {
+    try {
+        after(require(module));
+    } catch(e) {
+        exec('npm install '+module, {cwd:"."}, function () {
+            after(require(installUtilsName));
+        });
+    }
+}
+*/
+
+var childExec = require('child_process').exec;
+var fs = require('fs');
+var utils = require('./utils');
+var Future = require('fibers/future');
+
+// returns false if the file already exists
 exports.file = function file(source, destination) {
 	if( ! fs.existsSync(destination)) {
 	    var sourceContents = fs.readFileSync(source);
 	    var destinationFile = fs.writeFileSync(destination, sourceContents);
+        return true;
 	} else {
-	    utils.log('Skipping installing '+destination+' since it already exists.');
+	    return false;
 	}	
 };
 
-function npmRequire(moduleName, installLocation) {
-    if(installLocation === undefined) installLocation = moduleName;
-
-    try {
-        return require(moduleName);
-    } catch(e) {
-
-    }
-}
-
-
 exports.exec = exec;
-function exec() {
-    return childExec(command, options, function (error, stdout, stderr) {
-		if (error !== null) console.log(error);
-
-		utils.log('-stdout-\n' + stdout + "\n"
-	  			+ '-stderr-\n' + stderr + "\n"
-	  	);
-	});
+function exec(command, options) {
+    var f = new Future;
+    execAsync(command, options, f.resolver());
+    return f.wait();
 }
-
-exports.runCommand = runCommand;
-function runCommand(command, cwd) {
-	var options = {};
-	if(cwd!==undefined) options.cwd = cwd;
-    return childExec(command, options, function (error, stdout, stderr) {
-        console.log('executed: '+command);
-		if (error !== null) console.log(error);
-
-		utils.log('-stdout-\n' + stdout + "\n"
-	  			+ '-stderr-\n' + stderr + "\n"
-	  	);
-	});
+exports.gitRepo = gitRepo;
+function gitRepo(url, name, installDirectory, revision) {
+    var f = new Future;
+    gitRepoAsync(url, name, installDirectory, revision, f.resolver());
+    return f.wait();
 }
-
+exports.gitPackage = gitPackage;
+function gitPackage(command, options) {
+    var f = new Future;
+    gitPackageAsync(command, options, f.resolver());
+    return f.wait();
+}
 
 var shrinkwrapCache = {};
 function getShrinkwrap(source) {
@@ -79,7 +108,7 @@ exports.module = function module(module, destination) {
 	if(packageExists && (!moduleIsShrinkwrapped || shrinkwrap[module].version === package.version)) {
 		utils.log("Skipping installing module '"+module+"' since it already exists with the right version (or is a new module).");
 	} else {
-		runCommand("npm install "+module, destination);
+		exec("npm install "+destination+module);
 	}
 
     return moduleIsShrinkwrapped;
