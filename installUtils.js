@@ -40,8 +40,18 @@ var gitRepoAsync = function(url, name, installDirectory, revision, after) {
     }
 };
 
-var npmInstallAsync = function(location, after) {
-    execAsync('npm install', {cwd:location}, function (err, data) {
+// with two parameters, this installs a package at the location
+// with three parameters, this installs a specific package in the location
+var npmInstallAsync = function(location, param2, param3) {
+    if(param3 === undefined) { // 2 parameters
+        var after = param2;
+        var package = '';
+    } else {
+        var after = param3;
+        var package = " "+param2;
+    }
+
+    execAsync('npm install'+package, {cwd:location}, function (err, data) {
         after(err, data);
     });
 };
@@ -101,9 +111,9 @@ function gitRepo(url, name, installDirectory, revision) {
     return f.wait();
 }
 exports.gitPackage = gitPackage;
-function gitPackage(command, options) {
+function gitPackage(url, name, installDirectory, revision) {
     var f = new Future;
-    gitPackageAsync(command, options, f.resolver());
+    gitPackageAsync(url, name, installDirectory, revision, f.resolver());
     return f.wait();
 }
 
