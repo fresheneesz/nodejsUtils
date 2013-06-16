@@ -103,17 +103,22 @@ exports.module = function module(module, destination) {
     if(shrinkwrap === null) throw Error("No shrinkwrap! Failing."); // require shrinkwrap file
     var moduleIsShrinkwrapped = shrinkwrap[module] !== undefined;
 
-    var packagePath = destination+"node_modules/"+module+"/package.json";
-    var packageExists = fs.existsSync(packagePath);
-	if(packageExists) {
-        var package = JSON.parse(fs.readFileSync(packagePath));
-    }
+    var future = new Future;
+    process.nextTick(function() { new Fiber(function(){
+        var packagePath = destination+"node_modules/"+module+"/package.json";
+        var packageExists = fs.existsSync(packagePath);
+        if(packageExists) {
+            var package = JSON.parse(fs.readFileSync(packagePath));
+        }
 
-	if(packageExists && (!moduleIsShrinkwrapped || shrinkwrap[module].version === package.version)) {
-		utils.log("Skipping installing module '"+module+"' since it already exists with the right version (or is a new module).");
-	} else {
-		exec("npm install "+destination+module);
-	}
+        if(packageExists && (!moduleIsShrinkwrapped || shrinkwrap[module].version === package.version)) {
+            utils.log("Skipping installing module '"+module+"' since it already exists with the right version (or is a new module).");
+        } else {
+            utils.log(exec("npm install "+destination+module).wait());
+        }
 
-    return moduleIsShrinkwrapped;
+        future.return(moduleIsShrinkwrapped);
+    }).run();});
+
+    return future;
 };
