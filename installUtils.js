@@ -61,7 +61,7 @@ function gitRepo(url, name, installDirectory, revision) {
 
     var future = new Future;
     gitReset(location, revision).resolve(future, function(data) {
-        data['reset'] = fReset.wait();
+        data['reset'] = data;
         future.return(data);
     });
 
