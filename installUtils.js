@@ -24,6 +24,7 @@ function requireNpm(module, after) {
 var childExec = require('child_process').exec;
 var fs = require('fs');
 var utils = require('./utils');
+var Fiber = require('fibers');
 var Future = require('fibers/future');
 
 // returns false if the file already exists
