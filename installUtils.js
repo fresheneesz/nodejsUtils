@@ -50,20 +50,21 @@ function gitReset(location, revision) {
 }
 exports.gitRepo = gitRepo;
 function gitRepo(url, name, installDirectory, revision) {
-    var data = {};
-    var location = installDirectory+'/'+name+'/';
-
-    if( ! fs.existsSync(location)) {
-        data['clone'] = exec('git clone '+url+' '+location).wait();
-    } else {
-        data['clone'] = {'out': 'Skipping clone because '+location+' already exists.'};
-    }
-
     var future = new Future;
-    gitReset(location, revision).resolve(future, function(data) {
-        data['reset'] = data;
+    process.nextTick(function() { new Fiber(function(){
+        var data = {};
+        var location = installDirectory+'/'+name+'/';
+
+        if( ! fs.existsSync(location)) {
+            data['clone'] = exec('git clone '+url+' '+location).wait();
+        } else {
+            data['clone'] = {'out': 'Skipping clone because '+location+' already exists.'};
+        }
+
+        data['reset'] = gitReset(location, revision).wait();
+
         future.return(data);
-    });
+    }).run();});
 
     return future;
 }
@@ -71,10 +72,10 @@ function gitRepo(url, name, installDirectory, revision) {
 exports.gitPackage = gitPackage;
 function gitPackage(url, name, installDirectory, revision) {
     var future = new Future;
-    gitRepo(url, name, installDirectory, revision).resolve(future, function(data) {
-        data['install'] = exec('npm install', {cwd:installDirectory}).wait();
+    process.nextTick(function() { new Fiber(function(){
+        data['install'] = gitRepo(url, name, installDirectory, revision).wait();
         future.return(data);
-    });
+    }).run();});
 
     return future;
 };
