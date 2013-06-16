@@ -69,10 +69,10 @@ function gitRepo(url, name, installDirectory, revision) {
 }
 
 exports.gitPackage = gitPackage;
-function gitPackage(url, name, installDirectory, revision, after) {
+function gitPackage(url, name, installDirectory, revision) {
     var future = new Future;
     gitRepo(url, name, installDirectory, revision).resolve(future, function(data) {
-        data['install'] = exec('npm install', {cwd:location}).wait();
+        data['install'] = exec('npm install', {cwd:installDirectory}).wait();
         future.return(data);
     });
 
