@@ -6,67 +6,6 @@ var execAsync = function(command, options, after) {
     });
 };
 
-var gitResetAsync = function(location, revision, after) {
-    if(revision === undefined) revision = 'HEAD';
-
-    execAsync('git reset --hard '+revision, {cwd:location}, function (err, data) { // use a specific revision
-        after(err, data);
-    });
-};
-
-// separate from gitRepo so it can be more simply pulled out to bootstrap loading this module
-var gitRepoAsync = function(url, name, installDirectory, revision, after) {
-    var data = {};
-    var location = installDirectory+'/'+name+'/';
-
-    var reset = function() {
-        gitResetAsync(location, revision, function (err, resetData) { // use a specific revision
-            data['reset'] = resetData;
-            after(err, data);
-        });
-    };
-
-    if(require('fs').existsSync(location)) {
-        data['clone'] = {'out': 'Skipping clone because '+location+' already exists.'};
-        reset();
-
-    } else {
-        execAsync('git clone '+url+' '+location, {}, function (err, cloneData) {
-            data['clone'] = cloneData;
-            if(err) after(err, data);
-
-            reset();
-        });
-    }
-};
-
-// with two parameters, this installs a package at the location
-// with three parameters, this installs a specific package in the location
-var npmInstallAsync = function(location, param2, param3) {
-    if(param3 === undefined) { // 2 parameters
-        var after = param2;
-        var package = '';
-    } else {
-        var after = param3;
-        var package = " "+param2;
-    }
-
-    execAsync('npm install'+package, {cwd:location}, function (err, data) {
-        after(err, data);
-    });
-};
-
-// separate from gitPackage so it can be more simply pulled out to bootstrap loading this module
-var gitPackageAsync = function(url, name, installDirectory, revision, after) {
-    gitRepoAsync(url, name, installDirectory, revision, function(err, data) {
-        npmInstallAsync(installDirectory+'/'+name+'/', function (err, installData) {
-           data['install'] = installData;
-           after(err, data);
-        });
-    });
-};
-
-
 
 /*
 // requires a module, and if it doesn't exist, npm it in
@@ -102,20 +41,43 @@ exports.exec = exec;
 function exec(command, options) {
     var f = new Future;
     execAsync(command, options, f.resolver());
-    return f.wait();
+    return f;
+}
+exports.gitReset = gitReset;
+function gitReset(location, revision) {
+    if(revision === undefined) revision = 'HEAD';
+    return exec('git reset --hard '+revision, {cwd:location}); // use a specific revision
 }
 exports.gitRepo = gitRepo;
 function gitRepo(url, name, installDirectory, revision) {
-    var f = new Future;
-    gitRepoAsync(url, name, installDirectory, revision, f.resolver());
-    return f.wait();
+    var data = {};
+    var location = installDirectory+'/'+name+'/';
+
+    if( ! fs.existsSync(location)) {
+        data['clone'] = exec('git clone '+url+' '+location).wait();
+    } else {
+        data['clone'] = {'out': 'Skipping clone because '+location+' already exists.'};
+    }
+
+    var future = new Future;
+    gitReset(location, revision).resolve(future, function(data) {
+        data['reset'] = fReset.wait();
+        future.return(data);
+    });
+
+    return future;
 }
+
 exports.gitPackage = gitPackage;
-function gitPackage(url, name, installDirectory, revision) {
-    var f = new Future;
-    gitPackageAsync(url, name, installDirectory, revision, f.resolver());
-    return f.wait();
-}
+function gitPackage(url, name, installDirectory, revision, after) {
+    var future = new Future;
+    gitRepo(url, name, installDirectory, revision).resolve(future, function(data) {
+        data['install'] = exec('npm install', {cwd:location}).wait();
+        future.return(data);
+    });
+
+    return future;
+};
 
 var shrinkwrapCache = {};
 function getShrinkwrap(source) {
