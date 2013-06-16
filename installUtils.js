@@ -74,7 +74,8 @@ exports.gitPackage = gitPackage;
 function gitPackage(url, name, installDirectory, revision) {
     var future = new Future;
     process.nextTick(function() { new Fiber(function(){
-        data['install'] = gitRepo(url, name, installDirectory, revision).wait();
+        var data = gitRepo(url, name, installDirectory, revision).wait();
+        data['install'] = exec('npm install', {cwd:installDirectory});
         future.return(data);
     }).run();});
 
