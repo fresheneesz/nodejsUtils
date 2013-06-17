@@ -29,13 +29,17 @@ var Future = require('fibers/future');
 
 // returns false if the file already exists
 exports.file = function file(source, destination) {
-	if( ! fs.existsSync(destination)) {
-	    var sourceContents = fs.readFileSync(source);
-	    var destinationFile = fs.writeFileSync(destination, sourceContents);
-        return true;
-	} else {
-	    return false;
-	}	
+	var future = new Future;
+    process.nextTick(function() { new Fiber(function(){
+        if( ! fs.exists(destination, futures.resolver())) {
+            var sourceContents = fs.readFileSync(source);
+            fs.writeFileSync(destination, sourceContents);
+            return true;
+        } else {
+            return false;
+        }
+    }).run();});
+    return future;
 };
 
 exports.exec = exec;
@@ -44,6 +48,7 @@ function exec(command, options) {
     execAsync(command, options, f.resolver());
     return f;
 }
+
 exports.gitReset = gitReset;
 function gitReset(location, revision) {
     if(revision === undefined) revision = 'HEAD';
@@ -69,7 +74,6 @@ function gitRepo(url, name, installDirectory, revision) {
 
     return future;
 }
-
 exports.gitPackage = gitPackage;
 function gitPackage(url, name, installDirectory, revision) {
     var future = new Future;
@@ -82,6 +86,7 @@ function gitPackage(url, name, installDirectory, revision) {
     return future;
 };
 
+/*
 var shrinkwrapCache = {};
 function getShrinkwrap(source) {
     if(shrinkwrapCache[source] === undefined) {
@@ -114,7 +119,8 @@ exports.module = function module(module, destination) {
         if(packageExists && (!moduleIsShrinkwrapped || shrinkwrap[module].version === package.version)) {
             utils.log("Skipping installing module '"+module+"' since it already exists with the right version (or is a new module).");
         } else {
-            utils.log(exec("npm install "+destination+module).wait());
+            var result = exec("npm install "+module, {cwd: destination}).wait();
+            utils.log(JSON.stringify(result));
         }
 
         future.return(moduleIsShrinkwrapped);
@@ -122,3 +128,4 @@ exports.module = function module(module, destination) {
 
     return future;
 };
+*/
