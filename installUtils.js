@@ -12,9 +12,9 @@ exports.file = function file(source, destination) {
         if( ! fs.existsSync(destination)) {
             var sourceContents = fs.readFileSync(source);
             fs.writeFileSync(destination, sourceContents);
-            return true;
+            future.return(true);
         } else {
-            return false;
+            future.return(false);
         }
     }).run();});
     return future;
