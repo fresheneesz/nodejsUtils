@@ -1,5 +1,7 @@
 
 var fs = require("fs");
+var Future = require('fibers/future');
+var childExec = require('child_process').exec;
 
 Object.prototype.keys = function () {
     var keys = [];
@@ -29,13 +31,14 @@ Array.prototype.foreach = Array.prototype.forEach;
  * @param obj2
  * @returns obj3 a new object based on obj1 and obj2
  */
-var mergeInternal = exports.merge = function(obj1, obj2){
+exports.merge = merge;
+function merge(obj1, obj2){
     obj2.foreach(function(value, key) {
         obj1[key] = value;
     });
 };
 Object.prototype.merge = function(obj2){
-    mergeInternal(this, obj2);
+    merge(this, obj2);
 };
 
 
@@ -44,3 +47,19 @@ exports.log = function(m, e) {
     if(e !== undefined) msg += " - "+e.stack;
     fs.writeSync(process.stdout.fd, msg+"\n");
 };
+
+// separate from exec so it can be more simply pulled out to bootstrap loading this module
+var execAsync = function(command, options, after) {
+    if(options===undefined) options = {};
+    console.log('wtf');
+    require('child_process').exec(command, options, function (error, stdout, stderr) {
+        after(error, {out:stdout, err:stderr});
+    });
+};
+
+exports.exec = exec;
+function exec(command, options) {
+    var f = new Future;
+    execAsync(command, options, f.resolver());
+    return f;
+}
