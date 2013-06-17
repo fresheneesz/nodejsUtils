@@ -1,5 +1,6 @@
 
 var fs = require('fs');
+var os = require('os');
 var utils = require('./utils');
 var Fiber = require('fibers');
 var Future = require('fibers/future');
@@ -56,6 +57,16 @@ function gitPackage(url, name, installDirectory, revision) {
     return future;
 };
 
+exports.rm = rm;
+function rm(path) {
+    if(['win32','win64'].indexOf(os.platform()) !== -1) {
+        var command = 'rmdir /s/q '+path;
+    } else { // assume its linux-like
+        var command = 'rm -R '+path;
+    }
+
+    return utils.exec(command);
+}
 
 /*
 // requires a module, and if it doesn't exist, npm it in
