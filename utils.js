@@ -3,6 +3,16 @@ var fs = require("fs");
 var Future = require('fibers/future');
 var childExec = require('child_process').exec;
 
+String.prototype.replaceAll = function(str1, str2) {
+    var ignore = false;
+    return this.replace(new RegExp(str1.replace(/([\,\!\\\^\$\{\}\[\]\(\)\.\*\+\?\|\<\>\-\&])/g, function(c){return "\\" + c;}), "g"+(ignore?"i":"")), str2);
+};
+
+Object.prototype.toString = function() { // prettifies object's toString
+    var s = JSON.stringify(this, null, " ");
+    return s.replaceAll('\\n', '\n')
+};
+
 Object.prototype.keys = function () {
     var keys = [];
     for(var i in this) if (this.hasOwnProperty(i)) {
