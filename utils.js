@@ -1,5 +1,6 @@
 
 var fs = require("fs");
+var Fiber = require('fibers');
 var Future = require('fibers/future');
 var childExec = require('child_process').exec;
 
