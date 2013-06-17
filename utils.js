@@ -75,7 +75,6 @@ function futureEnv(f) {
 // separate from exec so it can be more simply pulled out to bootstrap loading this module
 var execAsync = function(command, options, after) {
     if(options===undefined) options = {};
-    console.log('wtf');
     require('child_process').exec(command, options, function (error, stdout, stderr) {
         after(error, {out:stdout, err:stderr});
     });
