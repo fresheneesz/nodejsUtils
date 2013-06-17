@@ -5,19 +5,24 @@ var utils = require('./utils');
 var Fiber = require('fibers');
 var Future = require('fibers/future');
 
+
 // returns false if the file already exists
 exports.file = function file(source, destination) {
-	var future = new Future;
-    process.nextTick(function() { new Fiber(function(){
+    return utils.futureEnv(function() {
         if( ! fs.existsSync(destination)) {
-            var sourceContents = fs.readFileSync(source);
-            fs.writeFileSync(destination, sourceContents);
-            future.return(true);
+            cp(source, destination).wait();
+            return true;
         } else {
-            future.return(false);
+            return false;
         }
-    }).run();});
-    return future;
+    });
+};
+exports.cp = cp;
+function cp(source, destination) {
+	return utils.futureEnv(function() {
+        var sourceContents = fs.readFileSync(source);
+        fs.writeFileSync(destination, sourceContents);
+    });
 };
 
 exports.gitReset = gitReset;
@@ -27,8 +32,7 @@ function gitReset(location, revision) {
 }
 exports.gitRepo = gitRepo;
 function gitRepo(url, name, installDirectory, revision) {
-    var future = new Future;
-    process.nextTick(function() { new Fiber(function(){
+    return utils.futureEnv(function() {
         var data = {};
         var location = installDirectory+'/'+name+'/';
 
@@ -40,21 +44,18 @@ function gitRepo(url, name, installDirectory, revision) {
 
         data['reset'] = gitReset(location, revision).wait();
 
-        future.return(data);
-    }).run();});
+        return data;
+    });
 
     return future;
 }
 exports.gitPackage = gitPackage;
 function gitPackage(url, name, installDirectory, revision) {
-    var future = new Future;
-    process.nextTick(function() { new Fiber(function(){
+    return utils.futureEnv(function() {
         var data = gitRepo(url, name, installDirectory, revision).wait();
         data['install'] = utils.exec('npm install', {cwd:installDirectory+"/"+name}).wait();
-        future.return(data);
-    }).run();});
-
-    return future;
+        return data;
+    });
 };
 
 exports.rm = rm;
