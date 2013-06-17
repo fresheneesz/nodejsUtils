@@ -31,7 +31,7 @@ var Future = require('fibers/future');
 exports.file = function file(source, destination) {
 	var future = new Future;
     process.nextTick(function() { new Fiber(function(){
-        if( ! fs.exists(destination, futures.resolver())) {
+        if( ! fs.existsSync(destination)) {
             var sourceContents = fs.readFileSync(source);
             fs.writeFileSync(destination, sourceContents);
             return true;
