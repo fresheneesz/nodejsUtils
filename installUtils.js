@@ -1,6 +1,7 @@
 
 var fs = require('fs');
 var os = require('os');
+var path = require('path');
 var utils = require('./utils');
 var Fiber = require('fibers');
 var Future = require('fibers/future');
@@ -68,6 +69,21 @@ function rm(path) {
         if(isDir)   var command = 'rm -R "'+path+'"';
         else        var command = 'rm "'+path+'"';
 
+    }
+
+    return utils.exec(command);
+}
+
+exports.symlink = symlink;
+function symlink(source, destination) {
+    var isDir = fs.lstatSync(source).isDirectory();
+    if(['win32','win64'].indexOf(os.platform()) !== -1) {
+        var flag = "";
+        if(isDir) var flag = "/D ";
+
+        var command = 'mklink '+flag+'"'+path.resolve(destination)+'" "'+path.resolve(source)+'"';
+    } else { // assume its linux-like
+        var command = 'ln -s "'+source+'" "'+destination+'"';
     }
 
     return utils.exec(command);
