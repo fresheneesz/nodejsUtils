@@ -76,7 +76,7 @@ function futureEnv(f) {
 var execAsync = function(command, options, after) {
     if(options===undefined) options = {};
     require('child_process').exec(command, options, function (error, stdout, stderr) {
-        after(error, {out:stdout, err:stderr});
+        after(error, {command: command, out:stdout, err:stderr});
     });
 };
 

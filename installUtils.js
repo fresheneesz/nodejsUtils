@@ -60,10 +60,14 @@ function gitPackage(url, name, installDirectory, revision) {
 
 exports.rm = rm;
 function rm(path) {
+    var isDir = fs.lstatSync(path).isDirectory();
     if(['win32','win64'].indexOf(os.platform()) !== -1) {
-        var command = 'rmdir /s/q '+path;
+        if(isDir)   var command = 'rmdir /s/q "'+path+'"';
+        else        var command = 'rm "'+path+'"';
     } else { // assume its linux-like
-        var command = 'rm -R '+path;
+        if(isDir)   var command = 'rm -R "'+path+'"';
+        else        var command = 'rm "'+path+'"';
+
     }
 
     return utils.exec(command);
