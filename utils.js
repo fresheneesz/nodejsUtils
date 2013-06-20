@@ -59,19 +59,6 @@ exports.log = function(m, e) {
     fs.writeSync(process.stdout.fd, msg+"\n");
 };
 
-exports.futureEnv = futureEnv;
-function futureEnv(f) {
-    var future = new Future;
-    process.nextTick(function() { new Fiber(function(){
-        try {
-            future.return(f());
-        } catch(e) {
-            future.throw(e);
-        }
-    }).run();});
-    return future;
-}
-
 // separate from exec so it can be more simply pulled out to bootstrap loading this module
 var execAsync = function(command, options, after) {
     if(options===undefined) options = {};

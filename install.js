@@ -7,60 +7,47 @@ var Fiber = require('fibers');
 var Future = require('fibers/future');
 
 
+var cp = exports.cp = function(source, destination) {
+	var sourceContents = fs.readFileSync(source);
+    fs.writeFileSync(destination, sourceContents);
+}.future();
+
 // returns false if the file already exists
-exports.file = function file(source, destination) {
-    return utils.futureEnv(function() {
-        if( ! fs.existsSync(destination)) {
-            cp(source, destination).wait();
-            return true;
-        } else {
-            return false;
-        }
-    });
-};
-exports.cp = cp;
-function cp(source, destination) {
-	return utils.futureEnv(function() {
-        var sourceContents = fs.readFileSync(source);
-        fs.writeFileSync(destination, sourceContents);
-    });
-};
+var file = exports.file = function(source, destination) {
+    if( ! fs.existsSync(destination)) {
+        cp(source, destination).wait();
+        return true;
+    } else {
+        return false;
+    }
+}.future();
 
 exports.gitReset = gitReset;
 function gitReset(location, revision) {
     if(revision === undefined) revision = 'HEAD';
     return utils.exec('git reset --hard '+revision, {cwd:location}); // use a specific revision
 }
-exports.gitRepo = gitRepo;
-function gitRepo(url, name, installDirectory, revision) {
-    return utils.futureEnv(function() {
-        var data = {};
-        var location = installDirectory+'/'+name+'/';
+var gitRepo = exports.gitRepo = function(url, name, installDirectory, revision) {
+    var data = {};
+    var location = installDirectory+'/'+name+'/';
 
-        if( ! fs.existsSync(location)) {
-            data['clone'] = utils.exec('git clone '+url+' '+location).wait();
-        } else {
-            data['clone'] = {'out': 'Skipping clone because '+location+' already exists.'};
-        }
+    if( ! fs.existsSync(location)) {
+        data['clone'] = utils.exec('git clone '+url+' '+location).wait();
+    } else {
+        data['clone'] = {'out': 'Skipping clone because '+location+' already exists.'};
+    }
 
-        data['reset'] = gitReset(location, revision).wait();
+    data['reset'] = gitReset(location, revision).wait();
+    return data;
+}.future();
 
-        return data;
-    });
-
-    return future;
-}
-exports.gitPackage = gitPackage;
-function gitPackage(url, name, installDirectory, revision) {
-    return utils.futureEnv(function() {
+var gitPackage = exports.gitPackage = function(url, name, installDirectory, revision) {
         var data = gitRepo(url, name, installDirectory, revision).wait();
         data['install'] = utils.exec('npm install', {cwd:installDirectory+"/"+name}).wait();
         return data;
-    });
-};
+}.future();
 
-exports.rm = rm;
-function rm(path) {
+exports.rm = rm; function rm(path) {
     var isDir = fs.lstatSync(path).isDirectory();
     if(['win32','win64'].indexOf(os.platform()) !== -1) {
         if(isDir)   var command = 'rmdir /s/q "'+path+'"';
@@ -74,8 +61,7 @@ function rm(path) {
     return utils.exec(command);
 }
 
-exports.symlink = symlink;
-function symlink(source, destination) {
+exports.symlink = symlink; function symlink(source, destination) {
     var isDir = fs.lstatSync(source).isDirectory();
     if(['win32','win64'].indexOf(os.platform()) !== -1) {
         var flag = "";
