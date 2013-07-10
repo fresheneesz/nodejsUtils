@@ -23,9 +23,10 @@ var file = exports.file = function(source, destination) {
 }.future();
 
 exports.gitReset = gitReset;
-function gitReset(location, revision) {
+function gitReset(location, revision, hard) {
     if(revision === undefined) revision = 'HEAD';
-    return utils.exec('git reset --hard '+revision, {cwd:location}); // use a specific revision
+    var hardOption = hard?'--hard':'';
+    return utils.exec('git reset '+hardOption+' '+revision, {cwd:location}); // use a specific revision
 }
 var gitRepo = exports.gitRepo = function(url, name, installDirectory, revision) {
     var data = {};
