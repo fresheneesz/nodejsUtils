@@ -16,6 +16,9 @@ exports.sym = function(algorithm, encoding) {
         return dec.update(encryptedMessage, encoding, 'utf8') + enc.final('utf8');
     };
 };
+exports.algorithms = function() {
+    return crypto.getCiphers();
+}
 
 /*asym: function() {
 
