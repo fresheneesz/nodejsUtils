@@ -1,7 +1,8 @@
 
+require('sugar');
 var fs = require("fs");
 var Future = require('fibers/future');
-var sugar = require('sugar');
+
 
 // native object extensions
 
@@ -10,15 +11,11 @@ String.prototype.replaceAll = function(str1, str2) {
     return this.replace(new RegExp(str1.replace(/([\,\!\\\^\$\{\}\[\]\(\)\.\*\+\?\|\<\>\-\&])/g, function(c){return "\\" + c;}), "g"+(ignore?"i":"")), str2);
 };
 
-Object.prototype.sugar = function() {
-    return sugar.extended(this);
-}
-
 // methods
 
 // Overwrites obj1's values with obj2's and adds obj2's if non existent in obj1
 exports.merge = merge; function merge(obj1, obj2){
-    obj2.sugar().foreach(function(value, key) {
+    obj2.extended().foreach(function(value, key) {
         obj1[key] = value;
     });
 }
