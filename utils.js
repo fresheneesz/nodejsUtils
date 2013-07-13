@@ -15,7 +15,7 @@ String.prototype.replaceAll = function(str1, str2) {
 
 // Overwrites obj1's values with obj2's and adds obj2's if non existent in obj1
 exports.merge = merge; function merge(obj1, obj2){
-    Object.extended(obj2).each(function(value, key) {
+    Object.extended(obj2).each(function(key, value) {
         obj1[key] = value;
     });
 }
