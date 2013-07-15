@@ -40,3 +40,28 @@ function exec(command, options) {
     execAsync(command, options, f.resolver())
     return f
 }
+
+// either used like futureWrap(function(){ ... })(arg1,arg2,etc) or
+//  futureWrap(object, 'methodName')(arg1,arg2,etc)
+exports.futureWrap = function() {
+    // function
+    if(arguments.length === 1) {
+        var fn = arguments[0]
+        var object = undefined
+
+    // object, function
+    } else {
+        var object = arguments[0]
+        var fn = object[arguments[1]]
+    }
+
+	return function() {
+		var args = Array.prototype.slice.call(arguments)
+		var future = new Future
+		args.push(future.resolver())
+		var me = this
+        if(object) me = object
+        fn.apply(me, args)
+		return future
+	}
+}

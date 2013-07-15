@@ -22,6 +22,12 @@ var file = exports.file = function(source, destination) {
     }
 }.future()
 
+var folder = exports.folder = function(name) {
+    if( ! fs.existsSync(name)) {
+        return utils.futureWrap(fs.mkdir)(name).wait();
+    }
+}
+
 exports.gitReset = gitReset
 function gitReset(location, revision, hard) {
     if(revision === undefined) revision = 'HEAD'
