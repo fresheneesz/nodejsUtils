@@ -3,6 +3,7 @@
 /*  usage:
     proto(function() {
         this.make           // sets constructor
+        // this.self        // is set automatically to the proto object itself (so you can reference it from the instance)
         this.anythingElse   // sets class methods/properties (on the prototype)
     })
 
@@ -41,19 +42,22 @@ function proto() {
 	var F = function() {}
 		F.prototype = prototype		// set the prototype for created instances
 
-	var result = function() { 	// result object factory
+	var objectFactory = function() { 	// result object factory
 		var x = new F()					// empty object
 		if(prototype.make)
             prototype.make.apply(x, arguments)	// populate object via the constructor
 		return x
 	}
 
+    // add reference to the returned object factory
+    prototype.self = objectFactory;
+
     // add all the prototype properties onto the static class as well (so you can access that class when you want to reference superclass properties)
 	for(var n in prototype) {
-        result[n] = prototype[n]
+        objectFactory[n] = prototype[n]
 	}
 
-    return result;
+    return objectFactory;
 }
 
 module.exports = proto
