@@ -30,7 +30,7 @@ exports.merge = merge; function merge(obj1, obj2){
 exports.log = function(m, e) {
     var msg = m
     if(e !== undefined) msg += " - "+e.stack
-    fs.writeSync(process.stdout.fd, msg+"\n")
+    console.log(msg)
 }
 
 // separate from exec so it can be more simply pulled out to bootstrap loading this module
@@ -71,4 +71,31 @@ exports.futureWrap = function() {
         fn.apply(me, args)
 		return future
 	}
+}
+
+// resolves varargs variable into more usable form
+// args - should be a function arguments variable
+// returns a javascript Array object of arguments that doesn't count trailing undefined values in the length
+exports.trimArgs = function(theArguments) {
+    var args = Array.prototype.slice.call(theArguments, 0)
+
+    var count = 0;
+    for(var n=args.length-1; n>=0; n--) {
+        if(args[n] === undefined)
+            count++
+    }
+    args.splice(-0, count)
+    return args
+}
+
+exports.grabStack = function() {
+    var orig = Error.prepareStackTrace;
+    Error.prepareStackTrace = function(_, stack) {
+        return stack;
+    };
+    var err = new Error;
+    Error.captureStackTrace(err, arguments.callee);
+    var stack = err.stack;
+    Error.prepareStackTrace = orig;
+    return stack;
 }
