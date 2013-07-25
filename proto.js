@@ -11,6 +11,7 @@
     proto(Parent, function() {
         this.make = function() {
             Parent.make.call(this,arguments) // super-class method call
+            return this   // you have to return yourself from the constructor
         }
     })
 
@@ -45,7 +46,7 @@ function proto() {
 	var objectFactory = function() { 	// result object factory
 		var x = new F()					// empty object
 		if(prototype.make)
-            prototype.make.apply(x, arguments)	// populate object via the constructor
+            return prototype.make.apply(x, arguments)	// populate object via the constructor
 		return x
 	}
 
