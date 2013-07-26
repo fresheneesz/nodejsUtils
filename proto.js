@@ -1,23 +1,48 @@
 "use strict";
 
 /*  usage:
-    proto(function() {
-        this.make           // sets constructor
-        // this.self        // is set automatically to the proto object itself (so you can reference it from the instance)
-        this.anythingElse   // sets class methods/properties (on the prototype)
-    })
+    var Parent = proto(function() {
+        this.make = function(v) {   // sets constructor
+            if(v) {
+                this.x = v                // you can normally access the object with this inside methods
+                return this               // you have to return yourself from the constructor
+            } else {
+                return undefined          // ^ this allows you to return anything you want from a constructor!
+            }
+        }
+                  }
+        // this.self            // is set automatically to the proto object itself (so you can reference it from the instance)
+        this.anythingElse = 5   // sets class methods/properties (on the prototype and the constructor object)
 
-    // inherit from a proto-created class (or any object that has the __proto__ property
-    proto(Parent, function() {
-        this.make = function() {
-            Parent.make.call(this,arguments) // super-class method call
-            return this   // you have to return yourself from the constructor
+        var privateFn = function(me, arg1, etc) {  // private functions don't have access to the correct 'this', so pass it in
+            me.x = arg1 + etc
+        }
+        this.usePrivate = function() {
+            privateFn(this, this.x, 1)
         }
     })
 
-    // note: instanceof doesn't work for these
+    // you can inherit from any object!
+    var Child = proto(Parent, function() {
+        this.make = function() {
+            Parent.make.call(this, arguments) // super-class method call
+            this.r = 10
+            return this
+        }
+
+        this.staticMethod = function(x) {        // create static methods just like instance methods - you can access them from the constructor
+            return this.self(x+12)               // uses its own constructor to create a Child object
+        }
+    })
+
+    var object = Child(1)                // instantiation
+    object.usePrivate()                  // method call (as usual)
+    var object2 = Child.staticMethod(1)  // static method call
+
+
+    // note: instanceof doesn't work for proto types
     // note2: you can't access the 'name' property from parent classes (the Function.name property gets in the way),
-    //   though the name property will work correctly on objects
+    //   though the name property will work correctly on instances
 */
 function proto() {
 	if(arguments.length == 1) {
