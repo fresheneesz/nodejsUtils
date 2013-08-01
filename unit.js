@@ -382,14 +382,15 @@ function formatGroup(test, format, nestingLevel) {
     var results = []
     test.results.forEach(function(result) {
         if(result.type === 'assert') {
-            if(result.success)
+            if(result.success) {
                 testCaseSuccesses++
-            else
+                assertSuccesses ++
+            } else {
                 testCaseFailures++
+                assertFailures++
+            }
 
             results.push(format.assert(result))
-            assertSuccesses+= results.successes
-            assertFailures+= results.failures
 
         } else if(result.type === 'group') {
             var group = formatGroup(result, format, nestingLevel+1)
@@ -401,6 +402,8 @@ function formatGroup(test, format, nestingLevel) {
                 testCaseFailures++
 
             results.push(group.result)
+            assertSuccesses+= group.assertSuccesses
+            assertFailures+= group.assertFailures
 
         } else if(result.type === 'log') {
             results.push(result.msg)
@@ -414,15 +417,19 @@ function formatGroup(test, format, nestingLevel) {
         exceptionResults.push(format.exception(e))
     })
 
-    assertSuccesses+= testCaseSuccesses
-    assertFailures+= testCaseFailures
     exceptions+= test.exceptions.length
 
     var formattedGroup = format.group(test.name,
                                       testCaseSuccesses, testCaseFailures,
                                       assertSuccesses, assertFailures, exceptions,
                                       results, exceptionResults, nestingLevel)
-    return {result: formattedGroup, successes: testCaseSuccesses, failures: testCaseFailures, exceptions: exceptions}
+    return {result: formattedGroup,
+            successes: testCaseSuccesses,
+            failures: testCaseFailures,
+            assertSuccesses: assertSuccesses,
+            assertFailures: assertFailures,
+            exceptions: exceptions
+    }
 }
 
 

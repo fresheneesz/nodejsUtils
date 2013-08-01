@@ -61,5 +61,47 @@ Unit.test("Testing proto", function() {
     })
 
 
+
+    this.test("Inheriting native objects", function() {
+        var UberObject1 = proto(function() {
+            this.x = 5
+        })
+        var UberObject2 = proto(Object, function() {
+            this.x = 5
+        })
+
+        Object.prototype.moo = "testing"
+        Object.moo = "testing"
+
+        var x = UberObject1()
+        this.ok(x.x === 5)
+        this.ok(x.moo === "testing")
+
+        x = UberObject2()
+        this.ok(x.x === 5)
+        this.ok(x.moo === "testing")
+
+        var BuberObject = proto(UberObject1, function() {
+
+        })
+
+        x = BuberObject()
+        this.ok(x.x === 5)
+        this.ok(x.moo === "testing")
+    })
+
+    /*
+    this.test("Inheriting Error objects", function() {
+        var MyError = proto(Error, function() {
+            this.x = 5
+        })
+
+        var e = MyError("The Message")
+        this.ok(e.message === "The Message")
+        this.ok(e.x === 5)
+    })
+    */
+
+
 }).writeConsole()
 
