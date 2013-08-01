@@ -2,6 +2,7 @@
 require('sugar')
 var fs = require("fs")
 var Future = require('fibers/future')
+var domain = require('domain').create
 
 
 // native object extensions
@@ -98,4 +99,23 @@ exports.grabStack = function() {
     var stack = err.stack;
     Error.prepareStackTrace = orig;
     return stack;
+}
+
+// asynchronous try catch using domains
+exports.async = function(options) {
+    // basically does the same thing as process.on('uncaughtException') but much more flexibly
+    // see http://nodejs.org/api/domain.html
+    var d = domain()
+    d.on('error', function(err) {
+        options.catch(err)
+    })
+
+    d.run(function() {
+        options.try()
+    })
+}
+
+exports.indent = function(i, str) {
+    return i+str.split("\n")       // get all lines
+              .join("\n"+i)      // join all lines with an indent
 }

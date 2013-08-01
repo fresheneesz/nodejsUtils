@@ -23,6 +23,10 @@
     })
 
     // you can inherit from any object!
+    // the resulting object factory will generate instances inheriting from:
+        // [if you inherit from]
+            // [a function]: that function's prototype
+            // [anything else]: that object itself
     var Child = proto(Parent, function() {
         this.make = function() {
             Parent.make.call(this, arguments) // super-class method call
@@ -41,8 +45,10 @@
 
 
     // note: instanceof doesn't work for proto types
-    // note2: you can't access the 'name' property from parent classes (the Function.name property gets in the way),
-    //   though the name property will work correctly on instances
+    // note2: you can't propertly access any non-writable properties of a function from the returned proto-object factory
+    //        though the name property will work correctly on instances
+    //          * this includes: name, length, arguments, and caller
+
 */
 function proto() {
 	if(arguments.length == 1) {
@@ -54,36 +60,39 @@ function proto() {
 		var prototypeBuilder = arguments[1]
 	}
 
-    var prototype = {}
+    // set up the parent into the prototype chain if a parent is passed
+    if(typeof(parent) === "function") {
+        prototypeBuilder.prototype = parent.prototype
+    } else {
+        prototypeBuilder.prototype = parent
+    }
 
-	// add parent prototype properties
-	for(var n in parent) {
-        prototype[n] = parent[n]
-	}
+    // the prototype that will be used to make instances
+    var prototype = new prototypeBuilder()
 
-	// run the prototype-building function on the resultant class-function to get an instantiated prototype object
-	prototypeBuilder.call(prototype)
+    // add reference to the returned object factory
+    prototype.self = ProtoObjectFactory;
 
 	// constructor for empty object which will be populated via the constructor
 	var F = function() {}
 		F.prototype = prototype		// set the prototype for created instances
 
-	var objectFactory = function() { 	// result object factory
+	function ProtoObjectFactory() { 	// result object factory
 		var x = new F()					// empty object
 		if(prototype.make)
             return prototype.make.apply(x, arguments)	// populate object via the constructor
-		return x
+		else
+            return x
 	}
-
-    // add reference to the returned object factory
-    prototype.self = objectFactory;
 
     // add all the prototype properties onto the static class as well (so you can access that class when you want to reference superclass properties)
 	for(var n in prototype) {
-        objectFactory[n] = prototype[n]
+        ProtoObjectFactory[n] = prototype[n]
 	}
 
-    return objectFactory;
+    ProtoObjectFactory.prototype = prototype  // set the prototype on the object factory
+
+    return ProtoObjectFactory;
 }
 
 module.exports = proto

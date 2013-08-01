@@ -1,7 +1,9 @@
 {"name":"nodejsUtils",
  "version":"0.0.0",
  "dependencies":[
-     "sugar"
+     "sugar",
+     "fibers",
+     "colors"
  ],
  "repository": {
    "type": "git",
