@@ -5,8 +5,14 @@ require('colors')
 var utils = require('./utils')
 
 /*  todo:
+    * default html reporter
+    * report the amount of time a test took
+    * allow individual tests be cherry picked (for rerunning tests or testing specific things in development)
     * some kind of helper handling for asynchronous crap - QUnit has a function that's called once asynchronous functions are done
         * you'd either have to know beforehand the number of 'start's you're
+        * Mocha allows you to pass a callback to a test group, in which case it will wait for the "done" call
+            * this might need to be extended a bit if you have multiple callbacks that must happen before its really "done"
+            * Tho maybe a test case can be aware of all the callbacks that have been setup and wait for a done on each of them
     * Note that a test group can have setup right in the test group construction
         * add something to allow teardown after a test group is completed
         * better yet, check out jasmine's beforeEach and afterEach
