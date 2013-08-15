@@ -3,7 +3,10 @@
  "dependencies":[
      "sugar",
      "fibers",
-     "colors"
+     "colors",
+     "git+https://fresheneesz@github.com/cujojs/curl.git#ef2bd16e9b43e7cd81011498b94cff9b66e28452",
+     "detective",
+     "resolve"
  ],
  "repository": {
    "type": "git",

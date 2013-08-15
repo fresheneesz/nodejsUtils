@@ -119,3 +119,10 @@ exports.indent = function(i, str) {
     return i+str.split("\n")       // get all lines
               .join("\n"+i)      // join all lines with an indent
 }
+
+exports.arrayRemove = function(array, value) {
+    var i = array.indexOf(value);
+    if(i != -1) {
+        array.splice(i, 1);
+    }
+}
