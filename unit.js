@@ -5,6 +5,7 @@ require('colors')
 var utils = require('./utils')
 
 /*  todo:
+    * a way to specify how many asserts a test should expect to get
     * default html reporter
     * report the amount of time a test took
     * allow individual tests be cherry picked (for rerunning tests or testing specific things in development)
@@ -18,6 +19,21 @@ var utils = require('./utils')
         * better yet, check out jasmine's beforeEach and afterEach
     * stream semantics for faster running tests (maybe?)
  */
+
+
+// default
+var unhandledErrorHandler = function(e) {
+    setTimeout(function() { //  nextTick
+        console.log(e.toString().red)
+    },0)
+}
+
+// setup unhandled error handler
+// unhandled errors happen when done is called, and  then an exception is thrown from the future
+exports.error = function(handler) {
+    unhandledErrorHandler = handler
+}
+
 
 exports.test = function(/*mainName=undefined, groups*/) {
     // unnamed test
@@ -46,8 +62,8 @@ function testGroup(tester, test) {
 		 catch: function(e) {
 			 tester.exceptions.push(e)
 			 if(tester.mainTester.resultsAccessed) {
-				 throw new Error("Test results were accessed before asynchronous parts of tests were fully complete."+
-								 +" Got error: "+ e.message+" "+ e.stack)
+                 unhandledErrorHandler(Error("Test results were accessed before asynchronous parts of tests were fully complete."
+								 +" Got error: "+ e.message+" "+ e.stack))
 			 }
 		 }
 	})
@@ -57,7 +73,8 @@ function testGroup(tester, test) {
 
 		name: tester.name,
 		results: tester.results,
-		exceptions: tester.exceptions
+		exceptions: tester.exceptions,
+        tester: tester
 	}
 }
 
@@ -95,7 +112,6 @@ var UnitTester = function(name, mainTester) {
                 success:success,
 
                 sourceLines: sourceLines,
-                test: this.name,
                 file: path.basename(filename),
                 line: lineNumber,
                 column: column
@@ -107,8 +123,8 @@ var UnitTester = function(name, mainTester) {
             this.results.push(result)
 
             if(this.mainTester.resultsAccessed) {
-                throw new Error("Test results were accessed before asynchronous parts of tests were fully complete."+
-                                 +" Got assert result: "+ result)
+                 unhandledErrorHandler(Error("Test results were accessed before asynchronous parts of tests were fully complete."+
+                                 " Got assert result: "+ JSON.stringify(result)))
             }
         },
         equal: function(expectedValue, testValue) {
@@ -124,9 +140,9 @@ var UnitTester = function(name, mainTester) {
     }
 
 var UnitTest = function(test) {
-    this.test = function() {
+    this.results = function() {
         // resultsAccessed allows the unit test to do special alerting if asynchronous tests aren't completed before the test is completed
-		test.resultsAccessed = true
+		test.tester.resultsAccessed = true
         return test
     }
 }
@@ -181,7 +197,7 @@ var UnitTest = function(test) {
                             ', '+color('red', assertFailures+' fail'+plural(assertFailures))+
                             ', and '+color('magenta', exceptions+' exception'+plural(exceptions))+"."
 
-                    var result =  '\n'
+                    var result = ''
                     if(name) result += color('cyan', name)+'\n'
                     result += addResults()
                     result += '\n\n'+resultsLine
@@ -194,13 +210,13 @@ var UnitTest = function(test) {
 
                 return result
             },
-            assert: function(result) {
-                if(false === result.success) {
-                    var word = "Fail:   ";
-                    var c = 'red'
-                } else {
+            assert: function(result, test) {
+                if(result.success) {
                     var word = "Success:";
                     var c = 'green'
+                } else {
+                    var word = "Fail:   ";
+                    var c = 'red'
                 }
 
                 var linesDisplay = result.sourceLines.join("\n")
@@ -215,7 +231,7 @@ var UnitTest = function(test) {
                     expectations += ", Got "+result.actual
                 }
 
-                return color(c, word)+" "+result.test
+                return color(c, word)+" "+test
                             +" ["+color('grey', ":"+result.file)+" "+result.line+color('grey', ":"+result.column)+"] "
                             +color(c, linesDisplay)
                             +expectations
@@ -376,7 +392,7 @@ var UnitTest = function(test) {
 var formatBasic = exports.formatBasic = function(unitTest, format) {
     //group, assert, exception
 
-    return formatGroup(unitTest.test(), format, 0).result;
+    return formatGroup(unitTest.results(), format, 0).result;
 }
 
 function formatGroup(test, format, nestingLevel) {
@@ -396,7 +412,7 @@ function formatGroup(test, format, nestingLevel) {
                 assertFailures++
             }
 
-            results.push(format.assert(result))
+            results.push(format.assert(result, test.name))
 
         } else if(result.type === 'group') {
             var group = formatGroup(result, format, nestingLevel+1)
@@ -473,7 +489,7 @@ function getFunctionCallLines(fileName, functionName, lineNumber) {
         	return lines.reverse()
         }
         if(lineNumber - n < 0) {
-        	return []	// something went wrong if this is being returned (the functionName wasn't found above - means you didn't get the function name right)
+        	throw Error("Didn't get any lines")//return ""	// something went wrong if this is being returned (the functionName wasn't found above - means you didn't get the function name right)
         }
     }
 }
