@@ -4,7 +4,6 @@ var detective = require('detective')
 var path = require('path')
 var resolve = require('resolve')
 var fs = require('fs')
-var utils = require("./utils")
 
 //todo: use asynchronous fs calls
 
@@ -16,10 +15,12 @@ var utils = require("./utils")
     // one argument:
         // an array of objects like: {dir: <directory path>, module: <module>}
         // errback
-// returns an object like
-    // {dependencies: <dependencies>,
-    //  unresolved: <require expressions that couldn't be resolved>,
-    //  unfound: <require dependencies that couldn't be found>
+// returns an object like:
+    // {<filename>:
+        // {resolved: <dependencies>,
+        //  unresolved: <require expressions that couldn't be resolved>,
+        //  unfound: <require dependencies that couldn't be found>
+        // }
     // }
 // Doesn't resolve node.js native libraries (returns them as 'unfound')
 module.exports = function() {
@@ -69,9 +70,9 @@ var traverse = function(dependencies, dependencyMap) {
                 }
             })
 
-            dependencyMap[dependencyFile] = { dependencies: subdependencies,
-                                    unresolved: detectiveWork.expressions,
-                                    unfound: unfoundSubDependencies}
+            dependencyMap[dependencyFile] = {   resolved: subdependencies,
+                                                unresolved: detectiveWork.expressions,
+                                                unfound: unfoundSubDependencies}
 
             var newDependencies = subdependencies.map(function(subdependency) {
                 return subdependency.absolute
