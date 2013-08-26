@@ -1,4 +1,8 @@
 'use strict';
+/* Copyright (c) 2013 Billy Tetrud - Free to use for any purpose: MIT License*/
+
+// todo:
+// * implement options like detective has for redefining isFile and readFile / readFileSync
 
 var detective = require('detective')
 var path = require('path')

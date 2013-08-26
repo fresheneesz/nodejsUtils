@@ -3,13 +3,20 @@ require('sugar')
 var fs = require("fs")
 var Future = require('fibers/future')
 var domain = require('domain').create
+var trimArgs = require("trimArguments")   // todo: remove this and have modules depend on the trimArguments module directly
 
 
 // native object extensions
 
-String.prototype.replaceAll = function(str1, str2) {
+String.prototype.replaceAll = function(needle, replacer) {
+    replaceAll(this, needle, replacer)
+}
+exports.replaceAll = replaceAll
+function replaceAll(stringToMutate, needle, replacer) {
     var ignore = false
-    return this.replace(new RegExp(str1.replace(/([\,\!\\\^\$\{\}\[\]\(\)\.\*\+\?\|\<\>\-\&])/g, function(c){return "\\" + c}), "g"+(ignore?"i":"")), str2)
+    return stringToMutate.replace(new RegExp(
+            needle.replace(/([\,\!\\\^\$\{\}\[\]\(\)\.\*\+\?\|\<\>\-\&])/g, function(c){return "\\" + c}), "g"+(ignore?"i":"")),
+            replacer)
 }
 
 // methods
@@ -77,17 +84,7 @@ exports.futureWrap = function() {
 // resolves varargs variable into more usable form
 // args - should be a function arguments variable
 // returns a javascript Array object of arguments that doesn't count trailing undefined values in the length
-exports.trimArgs = function(theArguments) {
-    var args = Array.prototype.slice.call(theArguments, 0)
-
-    var count = 0;
-    for(var n=args.length-1; n>=0; n--) {
-        if(args[n] === undefined)
-            count++
-    }
-    args.splice(-0, count)
-    return args
-}
+exports.trimArgs = trimArgs
 
 exports.grabStack = function() {
     var orig = Error.prepareStackTrace;
@@ -125,4 +122,24 @@ exports.arrayRemove = function(array, value) {
     if(i != -1) {
         array.splice(i, 1);
     }
+}
+
+
+exports.addslashes = addslashes; function addslashes(string) {
+    return string.replace(/\\/g, '\\\\').
+        replace(/\u0008/g, '\\b').
+        replace(/\t/g, '\\t').
+        replace(/\n/g, '\\n').
+        replace(/\f/g, '\\f').
+        replace(/\r/g, '\\r').
+        replace(/'/g, '\\\'').
+        replace(/"/g, '\\"');
+}
+
+exports.toJavascriptArrayString = function(array) {
+    var stringifiedArray = array.map(function(item) {
+        return '"'+addslashes(item)+'"'
+    })
+
+    return '['+stringifiedArray.join(',')+']'
 }
