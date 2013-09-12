@@ -1,14 +1,13 @@
 {"name":"nodejsUtils",
  "version":"0.0.0",
- "dependencies":[
-     "sugar",
-     "fibers",
-     "colors",
-     "git+https://git@github.com/cujojs/curl.git#52041d6a0ded7f59971f5e2c26431538b5ed77d2",
-     "git+https://git@github.com/alexgorbatchev/node-browser-builtins.git#e5f81125f3c37532d7def0736265dbe87861e5e4",
-     "detective",
-     "resolve"
- ],
+ "dependencies":{
+     "sugar":"",
+     "fibers":"",
+     "colors":""
+ },
+ "devDependencies": {
+     "deadunit": "git+https://git@github.com/fresheneesz/deadunit.git#f4eaca6297aece8f47ce58a2a022463f5e27d48b"
+ },
  "repository": {
    "type": "git",
    "url": "git://github.com/fresheneesz/nodejsUtils"

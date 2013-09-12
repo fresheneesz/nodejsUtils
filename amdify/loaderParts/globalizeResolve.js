@@ -1,2 +1,0 @@
-window.resolve = require('resolve')
-
