@@ -97,10 +97,6 @@ exports.futureWrap = function() {
 	}
 }
 
-// resolves varargs variable into more usable form
-// args - should be a function arguments variable
-// returns a javascript Array object of arguments that doesn't count trailing undefined values in the length
-exports.trimArgs = trimArgs
 
 exports.grabStack = function() {
     var orig = Error.prepareStackTrace;
