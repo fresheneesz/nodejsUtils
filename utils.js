@@ -46,20 +46,9 @@ exports.log = function(m, e) {
 //  stdout.on data: data
 //  stderr.on data: data
 //  on error: error
-// separate from exec so it can be more simply pulled out to bootstrap loading this module
-function execAsync(command, options, after) {
+exports.exec = exec; function exec(command, options) {
     if(options===undefined) options = {}
-    return require('child_process').exec(command, options, function (error, stdout, stderr) {
-        after(error, {command: command, out:stdout, err:stderr})
-    })
-}
-
-// @Deprecated
-exports.exec = exec
-function exec(command, options) {
-    var f = new Future
-    execAsync(command, options, f.resolver())
-    return f
+    return require('child_process').exec(command, options)
 }
 
 // either used like futureWrap(function(){ ... })(arg1,arg2,etc) or
