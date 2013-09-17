@@ -1,9 +1,9 @@
 
 require('sugar')
 var fs = require("fs")
+var EventEmitter = require("events").EventEmitter
 var Future = require('fibers/future')
 var domain = require('domain').create
-var trimArgs = require("trimArguments")   // todo: remove this and have modules depend on the trimArguments module directly
 
 
 // native object extensions
@@ -41,14 +41,35 @@ exports.log = function(m, e) {
     console.log(msg)
 }
 
-// returns a ChildProcess event emitter object with:
-//  on exit: code, signal
-//  stdout.on data: data
-//  stderr.on data: data
-//  on error: error
+
+// returns an object with:
+//  .wait(): returns the exit code or throws an error if an error has happened
+    //  one of the possible errors is a process-killed exception that has the property 'signal'
+//  .stdout: stdout stream
+//  .stderr: stderr stream
+//  .stdin: stdin input stream
 exports.exec = exec; function exec(command, options) {
     if(options===undefined) options = {}
-    return require('child_process').exec(command, options)
+    var p = require('child_process').exec(command, options)
+
+    var f = new Future
+    p.on('exit', function(code, signal) {
+        if(code !== null) {
+            f.return(code)
+        } else { // signal !== null
+            var err = new Error("Process killed with signal: "+signal)
+            err.signal = signal
+            f.throw(err)
+        }
+    })
+    p.on('error', function(err) {
+        f.throw(err)
+    })
+    f.stdout = p.stdout
+    f.stderr = p.stderr
+    f.stdin = p.stdin
+
+    return f
 }
 
 // either used like futureWrap(function(){ ... })(arg1,arg2,etc) or
