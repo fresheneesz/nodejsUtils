@@ -41,14 +41,20 @@ exports.log = function(m, e) {
     console.log(msg)
 }
 
+// returns a ChildProcess event emitter object with:
+//  on exit: code, signal
+//  stdout.on data: data
+//  stderr.on data: data
+//  on error: error
 // separate from exec so it can be more simply pulled out to bootstrap loading this module
 function execAsync(command, options, after) {
     if(options===undefined) options = {}
-    require('child_process').exec(command, options, function (error, stdout, stderr) {
+    return require('child_process').exec(command, options, function (error, stdout, stderr) {
         after(error, {command: command, out:stdout, err:stderr})
     })
 }
 
+// @Deprecated
 exports.exec = exec
 function exec(command, options) {
     var f = new Future
