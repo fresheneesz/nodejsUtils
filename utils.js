@@ -1,5 +1,4 @@
 
-require('sugar')
 var fs = require("fs")
 var EventEmitter = require("events").EventEmitter
 var Future = require('fibers/future')
